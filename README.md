@@ -1,7 +1,7 @@
 # ESP32-NTP-Wifi-Clock-With-StepperDrive
 ESP32 NTP Wifi Clock With Servodrive
 
-ESP32 (ESP32S WROOM-32) Wifi Clock that synchronizes the interal RTC via wifi connection to the NTP pool.
+ESP32 (ESP32S WROOM-32) running MicroPython Wifi Clock that synchronizes the interal RTC via wifi connection to the NTP pool.
 End goal is to have the internal RTC then interrupt the running code to instruct the multiple stepper motor drive system to move the clock hands about the clock face.
 
 Homing for each motor will be achieved by either microswitches, brass pins or other metal contact contrivance.
