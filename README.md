@@ -21,4 +21,10 @@ Accent stripe could be brass, fruit, teak, lignum vitae, ebony, purpleheart or r
 
 Stepper motors are to be the 1.8 degree 200 step variety.
 
+This is currently in early development and the motor drive hardware has not yet been assembled for testing. Live tests on the ESP32 are common however. 
+Non functional ESP32 compatible MicroPython code will NOT be pushed into the dev stream. It has to function.
+
+Code2.py exists because of a watchdog issue, bouncing in and out of files is a dirty way to prevent continous reboots by the ESP32.
+  If the watchdog has a fit in this code it means a reflash is necessary as reading and writing to the ESP32 is extremely unstable otherwise.
+
 Licensed GNU-GPLV3.
