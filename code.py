@@ -12,7 +12,7 @@ try:
         sta_if = network.WLAN(network.STA_IF)
         if not sta_if.isconnected():
             sta_if.active(True)
-            sta_if.connect('REDACTED', 'REDACTED')
+            sta_if.connect('TriOptimum', '17980A148051')
             while not sta_if.isconnected():
                 pass # wait till connection
         print("WiFi Connected")
@@ -164,3 +164,4 @@ while True:
     temperature = celsius(raw_value)
 # print the temperature value
     print('CPU Temperature(Both Cores): {:.2f} deg C'.format(temperature))
+    execfile("code2.py")
