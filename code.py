@@ -164,4 +164,3 @@ while True:
     temperature = celsius(raw_value)
 # print the temperature value
     print('CPU Temperature(Both Cores): {:.2f} deg C'.format(temperature))
-    execfile("code2.py")
