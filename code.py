@@ -5,63 +5,59 @@ import re
 import utime
 import esp32
 import machine
+import ntptime
 
-try:
-    def connect():
-        import network
-        sta_if = network.WLAN(network.STA_IF)
-        if not sta_if.isconnected():
-            sta_if.active(True)
-            sta_if.connect('REDACTED', 'REDACTED')
-            while not sta_if.isconnected():
-                pass # wait till connection
-        print("WiFi Connected")
-        print()
-        print("ESP32-IP | SUBNET | GATEWAY | DNS/DHCP")
-        print(sta_if.ifconfig())
-        
-    connect()
-    print()
-    print("WiFi Connected 8-D")
-    onboardled.on()
-except:
-    print()
-    print("WiFi NOT Connected 8-(")
-pass
+timeupdates = int(0)
+updatesperminute = int(0)
+updatesperhour = int(0)
+bongcount = 0
+#watchdog timer import & settings
+from machine import WDT
+wdt = WDT(timeout = 25000)
+wdt.feed() 
+
+onboardled = machine.Pin(2, machine.Pin.OUT)
+bongpin = machine.Pin(4, machine.Pin.OUT)
+bongvisual = machine.Pin(12, machine.Pin.OUT)
+updatepin = machine.Pin(13, machine.Pin.OUT)
+synchpin = machine.Pin(15, machine.Pin.OUT)
+smokepin = machine.Pin(17, machine.Pin.OUT)
+
+print()
+print("----------------------------------------")
+print("Running code.py")
+print("----------------------------------------")
+print()
 
 while True:
 
-    print()
-    print("Machine RTC Before Synchronisation:",time.localtime())
+# define a function to convert the raw temperature value
+# returned by esp32.raw_temperature() to celsius degrees
+    def celsius(raw):
+        return (raw - 32) / 1.8
+# read the raw temperature value using esp32.raw_temperature()
+    raw_value = esp32.raw_temperature()
+# convert the raw temperature value to celsius degrees
+    temperature = celsius(raw_value)
+# print the temperature value
+    #print('CPU Temperature(Both Cores): {:.2f} deg C'.format(temperature))
+
+    #print()
+    #print("RAW Machine Time (RTC) Before Synchronisation:",time.localtime())
 
 #anti-ban sleep
-    print()
-    print("Waiting 15secs for anti-ban connection...")
-    time.sleep(15)
-    print()
+    #print()
+    #print("Waiting 15secs for anti-ban connection...")
+    wdt.feed()
+    pass
+    wdt.feed()
+    #print()
 
-    try:
-        import ntptime
-    except:
-        print("Failed retrieving NTP TimeData. Wifi OK? IP Banned? Undervoltage brownout? Check proper power, then credentials and/or reboot this ESP32.")
-    pass    
-
-    print("Adjusted timezone offset (UTC -0hr) for GMT")
-    UTC_OFFSET = 0 * 60 * 60   # change the '-1' according to your timezone -1=GMT
+    #print("Adjusted timezone offset (UTC -0hr) for GMT")
+    UTC_OFFSET = 1 * 60 * 60   # change the first digit ('0') according to your timezone -1 or possibly 0 =GMT
     actual_time = time.localtime(time.time() + UTC_OFFSET)
-
-#blink led to indicate update.
-    onboardled.off()
-    time.sleep(0.5)
-    onboardled.on()
-    
     txt = (actual_time)
     txt2 = str(txt)
-
-##(2000, 1, 1, 0, 4, 10, 5, 1) # yours will be different
-##The format of this tuple is (year, month, month-day, hour, min, second, weekday, year-day)
-
-#original format
 
     txtproc1 = txt2.replace("(","")
     txtproc2 = txtproc1.replace(")","")
@@ -88,23 +84,21 @@ while True:
     weekday = txtproc4[70:76].replace("-","")
     yearday = txtproc4[80:90].replace("-","")
 
-    print()
-    print("NTP TIME UPDATED")
-    print()
-    print("Actual NTP time data RECEIVED:",actual_time)
-    print()
-    print("Machine RTC After Synchronisation:",time.localtime())
-    print()
-    print("Format of incoming data tuple is: (year, month, month-day, hour, min, second, weekday, year-day)")
-    print()
-    print("year:",year)
-    print("month:",month)
-    print("monthday:",day)
-    print("hour:",hour)
-    print("minutes:",minute)
-    print("second:",second)
-    print("weekday:",weekday)
-    print("yearday",yearday)
+    wdt.feed()
+    #print()
+    #print("Actual time data RECEIVED:",actual_time)
+    #print()
+    #rint("Machine RTC Time After Synchronisation:",time.localtime())
+    #print("Format of incoming data tuple is: (year, month, month-day, hour, min, second, weekday, year-day)")
+    #print()
+    print("Year:",year)
+    print("Month:",month)
+    print("MonthDay:",day)
+    print("Hour:",hour)
+    print("Minutes:",minute)
+    print("Second:",second)
+    print("Weekday:",weekday)
+    print("Yearday",yearday)
 
 #calculate written month
     if month.replace(" ","") == "1":
@@ -132,7 +126,6 @@ while True:
     elif month.replace(" ","") == "12":
        month = "December"
     pass
-    print("Month:",month)
 
 #calculate written day
     if weekday.replace(" ","") == "0":
@@ -150,18 +143,122 @@ while True:
     if weekday.replace(" ","") == "6":
             weekday = "Sunday"
     pass
-    print("Weekday:",weekday)
+    wdt.feed()
+
     print()
-    print("Time NOW:",weekday,day,month,year,",",hour,":",minute,":",second,"GMT")
+    print("----------------------------------------")
+    print(weekday,day,month,year,",",hour,":",minute,":",second,"GMT")
+    print("----------------------------------------")
+    
+    if month == "January" and year == "2000":
+        print("NTP & OB-RTC NOT YET SYNCHRONIZED")
+        pass
+    else:
+        print()
+        print("NTC TIME UPDATED AND ACCURATE")
+        synchpin.value(1)
+        print("Update Count: ",timeupdates)
+    pass
     print()
-# define a function to convert the raw temperature value
-# returned by esp32.raw_temperature() to celsius degrees
-    def celsius(raw):
-        return (raw - 32) / 1.8
-# read the raw temperature value using esp32.raw_temperature()
-    raw_value = esp32.raw_temperature()
-# convert the raw temperature value to celsius degrees
-    temperature = celsius(raw_value)
-# print the temperature value
-    print('CPU Temperature(Both Cores): {:.2f} deg C'.format(temperature))
-    execfile("code2.py")
+    
+    time.sleep(0.5)
+    
+    if second > "0" and second < "35" and minute < "52" and updatesperminute < 1 and updatesperhour < 1:
+        try:
+            wdt.feed()
+            print("    UPDATING...")
+            updatepin.value(1)
+            time.sleep(15)
+            ntptime.settime()
+            timeupdates+=1
+            updatesperminute+=1
+            updatesperhour+=1
+            updatepin.value(0)
+        except:
+            print("Failed retrieving NTP TimeData. Wifi? IP/MAC Ban? PSU Brownout? Check for proper power and decoupling capacitor, then credentials; else reboot this ESP32.")
+            print()
+            onboardled.value(0)
+            updatepin.value(1)
+            time.sleep(0.2)
+            updatepin.value(0)
+            time.sleep(0.2)
+            updatepin.value(1)
+            time.sleep(0.2)
+            updatepin.value(0)
+            time.sleep(0.2)
+            updatepin.value(1)
+            time.sleep(0.2)
+            updatepin.value(0)
+            time.sleep(0.2)
+            updatepin.value(1)
+            time.sleep(0.2)
+            updatepin.value(0)
+        pass    
+    onboardled.value(1)
+    
+    if second == "0":
+        wdt.feed()
+        updatesperminute=0
+    pass
+    
+    if minute == "59" and second == "0":
+        wdt.feed()
+        updatesperhour=0
+    pass
+
+    #420light
+    if hour == "4" and minute == "20" or hour == "16" and minute == "20":
+        wdt.feed()
+        smokepin.value(1)
+        print("BONGHIT!")
+    else:
+        smokepin.value(0)
+    pass
+   
+    #if hour == "8" and minute == "0" and second == "0":
+    #if second == "0" or second == "15" or second == "30" or second == "45":
+    #    bongpin.value(1)
+    #    bongvisual.value(1)
+    #    time.sleep(0.2)
+    #    bongpin.value(0)
+    #    bongvisual.value(0)
+    #    print("BONGHIT!")
+    #    pass
+    
+    minute = int(minute)
+    hour = int(hour)
+    second = int(second)
+        
+    if minute < 1 and second < 1:
+        wdt.feed()
+        bongvisual
+        bongvisual.value(1)
+    else:
+        bongvisual.value(0)
+        pass
+    
+    #BONGHIT
+    if hour > 7 and hour < 21 and minute < 1 and second < 1:
+        wdt.feed()
+        bongcount = hour
+        bongcount = int(bongcount)
+        print("bongcount: ",bongcount)
+        time.sleep(1)
+    pass
+
+    if bongcount > 12:
+        wdt.feed()
+        bongcount -= 12
+        print("bongcount: ",bongcount)
+        time.sleep(1)
+    pass
+
+    while bongcount > 0:
+        wdt.feed()
+        bongpin.value(1)
+        time.sleep(0.2)
+        bongpin.value(0)
+        time.sleep(1.8)
+        bongcount -= 1
+    pass
+    wdt.feed()
